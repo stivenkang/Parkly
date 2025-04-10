@@ -15,17 +15,33 @@ passport.use(
 			passwordField: "password",
 		},
 		async function (email, password, done) {
-			const user = await User.findOne({ email });
-			if (user) {
-				bcrypt.compare(
-					password,
-					user.hashedPassword,
-					(err, isMatch) => {
-						if (err || !isMatch) done(null, false);
-						else done(null, user);
+			// const user = await User.findOne({ email });
+			// if (user) {
+			// 	bcrypt.compare(
+			// 		password,
+			// 		user.hashedPassword,
+			// 		(err, isMatch) => {
+			// 			if (err || !isMatch) done(null, false);
+			// 			else done(null, user);
+			// 		}
+			// 	);
+			// } else done(null, false);
+
+			try {
+				const user = await User.findOne({email});
+				if (user) {
+					const isMatch = await user.comparePassword(password);
+					if (isMatch) {
+						return done(null, user);
+					} else {
+						return done(null, false, {message: "Invalid credentials"});
 					}
-				);
-			} else done(null, false);
+				} else {
+					return done(null, false, { message: "User not found"});
+				}
+			} catch (err) {
+				return done(err);
+			}
 		}
 	)
 );
